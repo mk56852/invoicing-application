@@ -1,0 +1,21 @@
+{
+    "LightColors": {
+        "primaryColor":"000000",
+        "secondColor":"451244",
+        "containerColor":"020202",
+        "fontColor":"000000",
+        "secondFontColor":"fafafa",
+        "backgroundColor":"fefefe"
+
+    },
+    "DarkColors":{
+        "primaryColor":"fafafa",
+        "secondColor":"451244",
+        "containerColor":"020202",
+        "fontColor":"000000",
+        "secondFontColor":"fafafa",
+        "backgroundColor":"fefefe"
+    },
+    "SideBarItems":["Home","Users"],
+    "sideBarMode":"expanded"
+}

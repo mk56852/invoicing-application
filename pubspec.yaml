@@ -1,0 +1,31 @@
+name: management_app
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  drift: ^2.23.1
+  syncfusion_flutter_datagrid: ^25.1.42
+  flutter_riverpod: ^2.6.1
+  drift_flutter: ^0.2.5
+  path_provider: ^2.1.5
+  google_fonts: ^6.3.0
+  modal_bottom_sheet: ^3.0.0
+  panara_dialogs: ^0.1.5
+  flutter_form_builder: ^9.5.0
+  syncfusion_flutter_core: ^25.2.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  drift_dev: ^2.23.1
+  build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
