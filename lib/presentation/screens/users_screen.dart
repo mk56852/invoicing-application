@@ -27,12 +27,15 @@ class UserScreen extends ConsumerWidget {
               width: 5,
             ),
             AppButton(
-              text: "Delete User 1",
+              text: "Export pdf",
               onClick: print,
               height: 50,
               width: 150,
             )
           ],
+        ),
+        SizedBox(
+          height: 20,
         ),
         Container(
           height: 500,

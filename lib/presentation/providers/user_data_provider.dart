@@ -10,7 +10,7 @@ class UserNotifier extends StateNotifier<List<User>> {
 
   Future<void> fetchData() async {
     if (state.isEmpty) {
-      await repo.getAll().then((users) => state = users);
+      await repo.getAll().then((users) => state = users.reversed.toList());
     }
   }
 
@@ -24,6 +24,12 @@ class UserNotifier extends StateNotifier<List<User>> {
   void deleteUser(int userId) async {
     await repo.delete(userId);
     state.removeWhere((item) => item.id == userId);
+    state = [...state];
+  }
+
+  void updateUser(User user) async {
+    await repo.update(user);
+    state[state.indexWhere((element) => element.id == user.id)] = user;
     state = [...state];
   }
 }

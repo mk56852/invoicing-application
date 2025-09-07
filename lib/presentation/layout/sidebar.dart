@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:management_app/presentation/screens/home_screen.dart';
+import 'package:management_app/presentation/screens/users_screen.dart';
+import 'package:management_app/presentation/widgets/sidebar_item.dart';
 
 class SideBar extends StatefulWidget {
-  const SideBar({super.key});
+  final Function updateScreen;
+  const SideBar({super.key, required this.updateScreen});
 
   @override
   State<SideBar> createState() => _SideBarState();
 }
 
 class _SideBarState extends State<SideBar> {
+  int selectedItemIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -30,6 +36,35 @@ class _SideBarState extends State<SideBar> {
           "Nessrine Karray",
           style: GoogleFonts.dancingScript(fontSize: 24, color: Colors.white),
         ),
+        SizedBox(
+          height: 80,
+        ),
+        InkWell(
+          onTap: () {
+            setState(() {
+              selectedItemIndex = 0;
+            });
+            widget.updateScreen(UserScreen());
+          },
+          child: SideBarItem(
+            name: "Propriétaire",
+            icon: Icons.person_2_outlined,
+            isSelected: selectedItemIndex == 0,
+          ),
+        ),
+        InkWell(
+          onTap: () {
+            setState(() {
+              selectedItemIndex = 1;
+            });
+            widget.updateScreen(HomeScreen());
+          },
+          child: SideBarItem(
+            name: "Statistique",
+            icon: Icons.dashboard,
+            isSelected: selectedItemIndex == 1,
+          ),
+        )
       ]),
     );
   }

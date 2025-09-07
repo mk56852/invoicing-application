@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:management_app/models/user.dart';
 import 'package:management_app/presentation/providers/user_data_provider.dart';
 import 'package:management_app/presentation/widgets/app_button.dart';
-import 'package:management_app/repositories/user_repository.dart';
-import 'package:management_app/repositories/user_repository_impl.dart';
 
 final _formKey = GlobalKey<FormBuilderState>();
 

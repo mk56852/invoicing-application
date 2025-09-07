@@ -92,11 +92,11 @@ class SideBarItemDesc {
   Widget getWidget() {
     switch (name) {
       case "Home":
-        return const SideBarItem(name: "Dashboard", icon: Icons.home);
+        return SideBarItem(name: "Dashboard", icon: Icons.home);
       case "Users":
-        return const SideBarItem(name: "Users", icon: Icons.person);
+        return SideBarItem(name: "Users", icon: Icons.person);
       default:
-        return const SideBarItem(name: "Dashboard", icon: Icons.home);
+        return SideBarItem(name: "Dashboard", icon: Icons.home);
     }
   }
 }

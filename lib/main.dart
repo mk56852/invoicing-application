@@ -8,19 +8,29 @@ void main() async {
   runApp(ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  Widget currentScreen = UserScreen();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
           body: AppLayout(
-              body: UserScreen(),
+              body: currentScreen,
               menuBar: Container(
                 height: 50,
               ),
-              sideBar: const SideBar())),
+              sideBar: SideBar(
+                updateScreen: (screen) => setState(() {
+                  currentScreen = screen;
+                }),
+              ))),
     );
   }
 }

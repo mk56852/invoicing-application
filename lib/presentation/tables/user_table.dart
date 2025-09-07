@@ -26,6 +26,7 @@ class _UserTableState extends ConsumerState<UserTable> {
   Widget build(BuildContext context) {
     List<User> users = ref.watch(userNotifierProvider);
     UserDataSource dataSource = UserDataSource(
+      ref: ref,
       rowsData: generateGridRows(users),
       deleteFunction: (userId) async => await PanaraConfirmDialog.show(
         context,
@@ -45,28 +46,59 @@ class _UserTableState extends ConsumerState<UserTable> {
     );
     return users.isEmpty
         ? Text("No Data Found")
-        : SfDataGridTheme(
-            data: SfDataGridThemeData(
-                sortIconColor: Colors.white, headerColor: Colors.black),
-            child: SfDataGrid(
-                allowSorting: true,
-                columnWidthMode: ColumnWidthMode.fill,
-                source: dataSource,
-                columns: [
-                  generateColumn("id", "ID"),
-                  generateColumn("name", "Nom du Propriétaire"),
-                  generateColumn("ref", "Ref.CFE"),
-                  generateColumn("title", "Titre Foncier"),
-                  generateColumn("price", "Montant HT"),
-                  generateColumn("action", "Action")
-                ]),
+        : Column(
+            children: [
+              Expanded(
+                child: SfDataGrid(
+                  allowEditing: true,
+                  navigationMode: GridNavigationMode.cell,
+                  selectionMode: SelectionMode.single,
+                  columnWidthMode: ColumnWidthMode.fill,
+                  source: dataSource,
+                  columns: [
+                    GridColumn(
+                      columnName: "select",
+                      width: 40,
+                      label: Container(
+                          color: Colors.black,
+                          alignment: Alignment.center,
+                          child: SizedBox()),
+                    ),
+                    generateColumn("id", "ID", false),
+                    generateColumn("name", "Nom du Propriétaire"),
+                    generateColumn("ref", "Ref.CFE"),
+                    generateColumn("title", "Titre Foncier"),
+                    generateColumn("price", "Montant HT"),
+                    generateColumn("action", "Action")
+                  ],
+                ),
+              ),
+              SfDataPagerTheme(
+                data: SfDataPagerThemeData(
+                  itemColor: Colors.white,
+                  selectedItemColor: Colors.black,
+                  itemBorderRadius: BorderRadius.circular(5),
+                  itemBorderWidth: 0.5,
+                  itemBorderColor: Colors.grey.shade400,
+                ),
+                child: SfDataPager(
+                  delegate: dataSource,
+                  pageCount: (users.length / 7).ceilToDouble(),
+                  direction: Axis.horizontal,
+                ),
+              ),
+            ],
           );
   }
 
   List<DataGridRow> generateGridRows(List<User> users) {
     return users
         .map((item) => DataGridRow(cells: [
-              DataGridCell(columnName: "id", value: item.id),
+              DataGridCell(columnName: "select", value: false),
+              DataGridCell(
+                columnName: "id",
+                value: item.id,
+              ),
               DataGridCell(columnName: "name", value: item.name),
               DataGridCell(columnName: "ref", value: item.ref),
               DataGridCell(columnName: "title", value: item.title),
@@ -76,8 +108,14 @@ class _UserTableState extends ConsumerState<UserTable> {
         .toList();
   }
 
-  GridColumn generateColumn(String columnName, String columnTitle) {
+  GridColumn generateColumn(String columnName, String columnTitle,
+      [bool editing = true]) {
+    bool isEditable = true;
+    if (editing != null) {
+      isEditable = editing;
+    }
     return GridColumn(
+        allowEditing: isEditable,
         columnName: columnName,
         label: Container(
           color: Colors.black,
@@ -92,37 +130,152 @@ class _UserTableState extends ConsumerState<UserTable> {
 }
 
 class UserDataSource extends DataGridSource {
-  List<DataGridRow> rowsData;
+  WidgetRef ref;
+  List<DataGridRow> allRows = [];
+  List<DataGridRow> paginatedRows = [];
   Function deleteFunction;
+  Set<int> selectedIds = {};
+  dynamic newCellValue;
+  TextEditingController editingController = TextEditingController();
 
-  UserDataSource({
-    required this.rowsData,
-    required this.deleteFunction,
-  });
-  @override
-  List<DataGridRow> get rows => rowsData;
+  UserDataSource(
+      {required List<DataGridRow> rowsData,
+      required this.deleteFunction,
+      required this.ref}) {
+    allRows = rowsData;
+    paginatedRows = allRows.take(7).toList();
+  }
 
   @override
+  List<DataGridRow> get rows => paginatedRows;
+
   DataGridRowAdapter? buildRow(DataGridRow row) {
+    final int id =
+        row.getCells().firstWhere((c) => c.columnName == "id").value as int;
+
     return DataGridRowAdapter(
-        cells: row.getCells().map((var item) {
-      if (item.columnName == "action") {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            AppIconButton(
-              icon: Icons.delete_forever_outlined,
-              color: Colors.redAccent,
-              onClick: () => deleteFunction(item.value as int),
+      cells: row.getCells().map((item) {
+        if (item.columnName == "select") {
+          return Center(
+            child: Checkbox(
+              value: selectedIds.contains(id),
+              onChanged: (bool? value) {
+                if (value == true) {
+                  selectedIds.add(id);
+                } else {
+                  selectedIds.remove(id);
+                }
+                notifyListeners();
+              },
             ),
-          ],
-        );
-      } else {
-        return Center(
-          child: Text(item.value.toString()),
-        );
-      }
-    }).toList());
+          );
+        } else if (item.columnName == "action") {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AppIconButton(
+                icon: Icons.delete_forever_outlined,
+                color: Colors.redAccent,
+                onClick: () => deleteFunction(item.value as int),
+              ),
+            ],
+          );
+        } else {
+          return Center(child: Text(item.value.toString()));
+        }
+      }).toList(),
+    );
+  }
+
+  @override
+  Future<bool> handlePageChange(int oldPageIndex, int newPageIndex) async {
+    _updatePaginatedRows(newPageIndex);
+    return true;
+  }
+
+  void _updatePaginatedRows(int pageIndex) {
+    const int rowsPerPage = 7;
+    int startIndex = pageIndex * rowsPerPage;
+    int endIndex = startIndex + rowsPerPage;
+
+    if (startIndex < allRows.length) {
+      if (endIndex > allRows.length) endIndex = allRows.length;
+      paginatedRows = allRows.getRange(startIndex, endIndex).toList();
+      notifyListeners();
+    }
+  }
+
+  @override
+  bool onCellBeginEdit(DataGridRow dataGridRow, RowColumnIndex rowColumnIndex,
+      GridColumn column) {
+    if (column.columnName == 'id') {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  @override
+  Widget? buildEditWidget(DataGridRow dataGridRow,
+      RowColumnIndex rowColumnIndex, GridColumn column, CellSubmit submitCell) {
+    // Text going to display on editable widget
+    final String displayText = dataGridRow
+            .getCells()
+            .firstWhere((DataGridCell dataGridCell) =>
+                dataGridCell.columnName == column.columnName)
+            .value
+            ?.toString() ??
+        '';
+
+    newCellValue = null;
+
+    final bool isNumericType = column.columnName == 'price';
+
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      alignment: isNumericType ? Alignment.centerRight : Alignment.centerLeft,
+      child: TextField(
+        autofocus: true,
+        controller: editingController..text = displayText,
+        textAlign: isNumericType ? TextAlign.right : TextAlign.left,
+        decoration: const InputDecoration(
+          contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 16.0),
+        ),
+        keyboardType: isNumericType ? TextInputType.number : TextInputType.text,
+        onChanged: (String value) {
+          if (value.isNotEmpty) {
+            if (isNumericType) {
+              newCellValue = double.parse(value);
+            } else {
+              newCellValue = value;
+            }
+          } else {
+            newCellValue = null;
+          }
+        },
+        onSubmitted: (String value) {
+          submitCell();
+        },
+      ),
+    );
+  }
+
+  @override
+  Future<void> onCellSubmit(DataGridRow dataGridRow,
+      RowColumnIndex rowColumnIndex, GridColumn column) async {
+    final dynamic oldValue = dataGridRow
+            .getCells()
+            .firstWhere((DataGridCell dataGridCell) =>
+                dataGridCell.columnName == column.columnName)
+            .value ??
+        '';
+
+    if (newCellValue == null || oldValue == newCellValue) {
+      return;
+    }
+    User user = User.fromDataGridRow(dataGridRow);
+    user.updateField(column.columnName, newCellValue);
+    ref.read(userNotifierProvider.notifier).updateUser(user);
+    return;
   }
 }
