@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_debouncer/flutter_debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:management_app/models/user.dart';
 import 'package:management_app/presentation/providers/user_data_provider.dart';
@@ -15,19 +16,53 @@ class UserTable extends ConsumerStatefulWidget {
 }
 
 class _UserTableState extends ConsumerState<UserTable> {
+  final TextEditingController _searchController = TextEditingController();
+  final Debouncer _debouncer = Debouncer();
+  List<User> _filteredUsers = [];
+
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     Future.microtask(
         () async => await ref.read(userNotifierProvider.notifier).fetchData());
   }
 
   @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _debouncer.debounce(
+        duration: Duration(milliseconds: 400),
+        onDebounce: () {
+          setState(() {});
+        });
+  }
+
+  @override
   Widget build(BuildContext context) {
     List<User> users = ref.watch(userNotifierProvider);
+
+    if (_searchController.text.isEmpty) {
+      _filteredUsers = users;
+    } else {
+      final searchLower = _searchController.text.toLowerCase();
+      _filteredUsers = users.where((user) {
+        return user.name.toLowerCase().contains(searchLower) ||
+            user.ref.toLowerCase().contains(searchLower) ||
+            user.title.toLowerCase().contains(searchLower) ||
+            user.id.toString().contains(searchLower) ||
+            user.price.toString().contains(searchLower);
+      }).toList();
+    }
+
     UserDataSource dataSource = UserDataSource(
       ref: ref,
-      rowsData: generateGridRows(users),
+      rowsData: generateGridRows(_filteredUsers),
       deleteFunction: (userId) async => await PanaraConfirmDialog.show(
         context,
         title: "Supprimer données",
@@ -44,12 +79,30 @@ class _UserTableState extends ConsumerState<UserTable> {
         barrierDismissible: false,
       ),
     );
-    return users.isEmpty
-        ? Text("No Data Found")
-        : Column(
-            children: [
-              Expanded(
-                child: SfDataGrid(
+
+    return Column(
+      children: [
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            labelText: 'Rechercher un propriétaire',
+            hintText: 'taper le nom, ref, ...',
+            prefixIcon: Icon(Icons.search),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.clear),
+              onPressed: () {
+                _searchController.clear();
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _filteredUsers.isEmpty
+              ? Center(child: Text('No users found'))
+              : SfDataGrid(
                   allowEditing: true,
                   navigationMode: GridNavigationMode.cell,
                   selectionMode: SelectionMode.single,
@@ -72,24 +125,28 @@ class _UserTableState extends ConsumerState<UserTable> {
                     generateColumn("action", "Action")
                   ],
                 ),
-              ),
-              SfDataPagerTheme(
-                data: SfDataPagerThemeData(
-                  itemColor: Colors.white,
-                  selectedItemColor: Colors.black,
-                  itemBorderRadius: BorderRadius.circular(5),
-                  itemBorderWidth: 0.5,
-                  itemBorderColor: Colors.grey.shade400,
-                ),
-                child: SfDataPager(
-                  delegate: dataSource,
-                  pageCount: (users.length / 7).ceilToDouble(),
-                  direction: Axis.horizontal,
-                ),
-              ),
-            ],
-          );
+        ),
+        SfDataPagerTheme(
+          data: SfDataPagerThemeData(
+            itemColor: Colors.white,
+            selectedItemColor: Colors.black,
+            itemBorderRadius: BorderRadius.circular(5),
+            itemBorderWidth: 0.5,
+            itemBorderColor: Colors.grey.shade400,
+          ),
+          child: SfDataPager(
+            delegate: dataSource,
+            pageCount: _filteredUsers.length > 0
+                ? (_filteredUsers.length / 7).ceilToDouble()
+                : 1,
+            direction: Axis.horizontal,
+          ),
+        ),
+      ],
+    );
   }
+
+  // ... existing generateGridRows and generateColumn methods ...
 
   List<DataGridRow> generateGridRows(List<User> users) {
     return users

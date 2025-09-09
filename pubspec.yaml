@@ -19,6 +19,8 @@ dependencies:
   panara_dialogs: ^0.1.5
   flutter_form_builder: ^9.5.0
   syncfusion_flutter_core: ^25.2.7
+  syncfusion_flutter_pdf: ^25.2.7
+  flutter_debouncer: ^2.0.0
 
 dev_dependencies:
   flutter_test:

@@ -24,7 +24,7 @@ class _MainAppState extends State<MainApp> {
           body: AppLayout(
               body: currentScreen,
               menuBar: Container(
-                height: 50,
+                height: 25,
               ),
               sideBar: SideBar(
                 updateScreen: (screen) => setState(() {

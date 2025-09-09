@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:management_app/presentation/tables/user_table.dart';
 import 'package:management_app/presentation/widgets/add_user_modal.dart';
 import 'package:management_app/presentation/widgets/app_button.dart';
+import 'package:management_app/presentation/widgets/screen_title.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class UserScreen extends ConsumerWidget {
@@ -12,33 +14,46 @@ class UserScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Wrap(
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            AppButton(
-              text: "Add User",
-              onClick: () => showMaterialModalBottomSheet(
-                  backgroundColor: Colors.transparent,
-                  context: context,
-                  builder: (context) => AddUserModal(ref: ref)),
-              height: 50,
-              width: 150,
+            Expanded(
+              child: ScreenTitle(title: "Gérer les propriétaires"),
             ),
-            SizedBox(
-              width: 5,
+            Flexible(
+              child: Wrap(
+                children: [
+                  AppOutlinedButton(
+                    text: "Ajouter propriétaire",
+                    icon: Icons.person_add,
+                    onClick: () => showMaterialModalBottomSheet(
+                        backgroundColor: Colors.transparent,
+                        context: context,
+                        builder: (context) => AddUserModal(ref: ref)),
+                    height: 50,
+                    width: 200,
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  AppOutlinedButton(
+                    text: "Exporter pdf",
+                    icon: Icons.download,
+                    onClick: print,
+                    height: 50,
+                    width: 180,
+                  )
+                ],
+              ),
             ),
-            AppButton(
-              text: "Export pdf",
-              onClick: print,
-              height: 50,
-              width: 150,
-            )
           ],
         ),
         SizedBox(
-          height: 20,
+          height: 10,
         ),
         Container(
-          height: 500,
+          height: 540,
           child: UserTable(),
         ),
       ],

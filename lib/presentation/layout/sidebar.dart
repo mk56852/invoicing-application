@@ -23,21 +23,23 @@ class _SideBarState extends State<SideBar> {
         minWidth: 300,
       ),
       height: double.maxFinite,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+      padding: const EdgeInsets.only(left: 10, right: 10, top: 50),
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
       decoration: BoxDecoration(
           color: Colors.black, borderRadius: BorderRadius.circular(15)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Text(
           "Maitre",
-          style: GoogleFonts.dancingScript(fontSize: 24, color: Colors.white),
+          style: GoogleFonts.dancingScript(
+              fontSize: 26, color: Colors.white, fontWeight: FontWeight.bold),
         ),
         Text(
           "Nessrine Karray",
-          style: GoogleFonts.dancingScript(fontSize: 24, color: Colors.white),
+          style: GoogleFonts.dancingScript(
+              fontSize: 26, color: Colors.white, fontWeight: FontWeight.bold),
         ),
         SizedBox(
-          height: 80,
+          height: 100,
         ),
         InkWell(
           onTap: () {
