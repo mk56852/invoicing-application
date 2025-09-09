@@ -36,3 +36,6 @@ class UserNotifier extends StateNotifier<List<User>> {
 
 StateNotifierProvider<UserNotifier, List<User>> userNotifierProvider =
     StateNotifierProvider<UserNotifier, List<User>>((var x) => UserNotifier());
+
+StateProvider<Set<int>> selectedIdsProvider =
+    StateProvider<Set<int>>((ref) => {});

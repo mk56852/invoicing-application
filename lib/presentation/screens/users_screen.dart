@@ -14,43 +14,9 @@ class UserScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: ScreenTitle(title: "Gérer les propriétaires"),
-            ),
-            Flexible(
-              child: Wrap(
-                children: [
-                  AppOutlinedButton(
-                    text: "Ajouter propriétaire",
-                    icon: Icons.person_add,
-                    onClick: () => showMaterialModalBottomSheet(
-                        backgroundColor: Colors.transparent,
-                        context: context,
-                        builder: (context) => AddUserModal(ref: ref)),
-                    height: 50,
-                    width: 200,
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  AppOutlinedButton(
-                    text: "Exporter pdf",
-                    icon: Icons.download,
-                    onClick: print,
-                    height: 50,
-                    width: 180,
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
+        ScreenTitle(title: "Gérer les propriétaires"),
         SizedBox(
-          height: 10,
+          height: 15,
         ),
         Container(
           height: 540,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:management_app/configuration/app_config.dart';
 
 class ScreenTitle extends StatelessWidget {
   final String title;
@@ -16,7 +17,9 @@ class ScreenTitle extends StatelessWidget {
         Text(
           title,
           style: GoogleFonts.roboto(
-              fontSize: 27, color: Colors.black, fontWeight: FontWeight.bold),
+              fontSize: 27,
+              color: SimpleAppColors.blueColor,
+              fontWeight: FontWeight.bold),
         ),
       ],
     );

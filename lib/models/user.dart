@@ -29,6 +29,20 @@ class User {
       price: values['price'] as double,
     );
   }
+  DataGridRow toDataGridRow() {
+    return DataGridRow(cells: [
+      DataGridCell(columnName: "select", value: false),
+      DataGridCell(
+        columnName: "id",
+        value: id,
+      ),
+      DataGridCell(columnName: "name", value: name),
+      DataGridCell(columnName: "ref", value: ref),
+      DataGridCell(columnName: "title", value: title),
+      DataGridCell(columnName: "price", value: price),
+      DataGridCell(columnName: "action", value: id)
+    ]);
+  }
 
   void updateField(String fieldName, dynamic newValue) {
     switch (fieldName) {

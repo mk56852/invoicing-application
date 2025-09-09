@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_debouncer/flutter_debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:management_app/configuration/app_config.dart';
 import 'package:management_app/models/user.dart';
 import 'package:management_app/presentation/providers/user_data_provider.dart';
+import 'package:management_app/presentation/widgets/add_user_modal.dart';
 import 'package:management_app/presentation/widgets/app_button.dart';
+import 'package:management_app/presentation/widgets/item_selection_counter.dart';
+import 'package:management_app/utils/pdf_builder.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:panara_dialogs/panara_dialogs.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
+
+final GlobalKey<SfDataGridState> key = GlobalKey<SfDataGridState>();
 
 class UserTable extends ConsumerStatefulWidget {
   UserTable({super.key});
@@ -16,6 +23,7 @@ class UserTable extends ConsumerStatefulWidget {
 }
 
 class _UserTableState extends ConsumerState<UserTable> {
+  PdfBuilder builder = PdfBuilder(gridKey: key);
   final TextEditingController _searchController = TextEditingController();
   final Debouncer _debouncer = Debouncer();
   List<User> _filteredUsers = [];
@@ -46,6 +54,7 @@ class _UserTableState extends ConsumerState<UserTable> {
   @override
   Widget build(BuildContext context) {
     List<User> users = ref.watch(userNotifierProvider);
+    final selectedIds = ref.watch(selectedIdsProvider);
 
     if (_searchController.text.isEmpty) {
       _filteredUsers = users;
@@ -75,34 +84,76 @@ class _UserTableState extends ConsumerState<UserTable> {
         },
         onTapCancel: () => Navigator.pop(context),
         panaraDialogType: PanaraDialogType.custom,
-        color: Colors.black,
+        color: SimpleAppColors.blueColor,
         barrierDismissible: false,
       ),
     );
 
     return Column(
       children: [
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            labelText: 'Rechercher un propriétaire',
-            hintText: 'taper le nom, ref, ...',
-            prefixIcon: Icon(Icons.search),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.clear),
-              onPressed: () {
-                _searchController.clear();
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              child: SizedBox(
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Rechercher un propriétaire',
+                    hintText: 'taper le nom, ref, ...',
+                    prefixIcon: Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 100,
+            ),
+            AppOutlinedButton(
+              text: "Ajouter propriétaire",
+              icon: Icons.person_add,
+              onClick: () => showMaterialModalBottomSheet(
+                  backgroundColor: Colors.transparent,
+                  context: context,
+                  builder: (context) => AddUserModal(ref: ref)),
+              height: 50,
+              borderColor: SimpleAppColors.blueColor,
+              fontColor: SimpleAppColors.blueColor,
+              width: 200,
+            ),
+            SizedBox(
+              width: 5,
+            ),
+            AppOutlinedButton(
+              borderColor: SimpleAppColors.blueColor,
+              fontColor: SimpleAppColors.blueColor,
+              text: "Exporter pdf",
+              icon: Icons.download,
+              onClick: () async {
+                await builder.build(users, selectedIds);
               },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
+              height: 50,
+              width: 180,
+            )
+          ],
+        ),
+        SizedBox(
+          height: 10,
         ),
         Expanded(
           child: _filteredUsers.isEmpty
               ? Center(child: Text('No users found'))
               : SfDataGrid(
+                  key: key,
                   allowEditing: true,
                   navigationMode: GridNavigationMode.cell,
                   selectionMode: SelectionMode.single,
@@ -111,11 +162,11 @@ class _UserTableState extends ConsumerState<UserTable> {
                   columns: [
                     GridColumn(
                       columnName: "select",
-                      width: 40,
+                      width: 60,
                       label: Container(
-                          color: Colors.black,
+                          color: SimpleAppColors.blueColor,
                           alignment: Alignment.center,
-                          child: SizedBox()),
+                          child: ItemSelectionCounter()),
                     ),
                     generateColumn("id", "ID", false),
                     generateColumn("name", "Nom du Propriétaire"),
@@ -129,7 +180,7 @@ class _UserTableState extends ConsumerState<UserTable> {
         SfDataPagerTheme(
           data: SfDataPagerThemeData(
             itemColor: Colors.white,
-            selectedItemColor: Colors.black,
+            selectedItemColor: SimpleAppColors.blueColor,
             itemBorderRadius: BorderRadius.circular(5),
             itemBorderWidth: 0.5,
             itemBorderColor: Colors.grey.shade400,
@@ -145,8 +196,6 @@ class _UserTableState extends ConsumerState<UserTable> {
       ],
     );
   }
-
-  // ... existing generateGridRows and generateColumn methods ...
 
   List<DataGridRow> generateGridRows(List<User> users) {
     return users
@@ -175,7 +224,7 @@ class _UserTableState extends ConsumerState<UserTable> {
         allowEditing: isEditable,
         columnName: columnName,
         label: Container(
-          color: Colors.black,
+          color: SimpleAppColors.blueColor,
           child: Center(
             child: Text(
               columnTitle,
@@ -191,7 +240,7 @@ class UserDataSource extends DataGridSource {
   List<DataGridRow> allRows = [];
   List<DataGridRow> paginatedRows = [];
   Function deleteFunction;
-  Set<int> selectedIds = {};
+
   dynamic newCellValue;
   TextEditingController editingController = TextEditingController();
 
@@ -209,7 +258,7 @@ class UserDataSource extends DataGridSource {
   DataGridRowAdapter? buildRow(DataGridRow row) {
     final int id =
         row.getCells().firstWhere((c) => c.columnName == "id").value as int;
-
+    final selectedIds = ref.read(selectedIdsProvider);
     return DataGridRowAdapter(
       cells: row.getCells().map((item) {
         if (item.columnName == "select") {
@@ -217,11 +266,13 @@ class UserDataSource extends DataGridSource {
             child: Checkbox(
               value: selectedIds.contains(id),
               onChanged: (bool? value) {
+                final newSelection = Set<int>.from(selectedIds);
                 if (value == true) {
-                  selectedIds.add(id);
+                  newSelection.add(id);
                 } else {
-                  selectedIds.remove(id);
+                  newSelection.remove(id);
                 }
+                ref.read(selectedIdsProvider.notifier).state = newSelection;
                 notifyListeners();
               },
             ),
@@ -232,7 +283,7 @@ class UserDataSource extends DataGridSource {
             children: [
               AppIconButton(
                 icon: Icons.delete_forever_outlined,
-                color: Colors.redAccent,
+                color: SimpleAppColors.blueColor,
                 onClick: () => deleteFunction(item.value as int),
               ),
             ],

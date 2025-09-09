@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:management_app/presentation/screens/home_screen.dart';
+import 'package:management_app/configuration/app_config.dart';
+import 'package:management_app/presentation/screens/profil_screen.dart';
 import 'package:management_app/presentation/screens/users_screen.dart';
 import 'package:management_app/presentation/widgets/sidebar_item.dart';
 
@@ -26,7 +27,8 @@ class _SideBarState extends State<SideBar> {
       padding: const EdgeInsets.only(left: 10, right: 10, top: 50),
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
       decoration: BoxDecoration(
-          color: Colors.black, borderRadius: BorderRadius.circular(15)),
+          color: SimpleAppColors.blueColor,
+          borderRadius: BorderRadius.circular(15)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Text(
           "Maitre",
@@ -59,10 +61,10 @@ class _SideBarState extends State<SideBar> {
             setState(() {
               selectedItemIndex = 1;
             });
-            widget.updateScreen(HomeScreen());
+            widget.updateScreen(ProfilScreen());
           },
           child: SideBarItem(
-            name: "Statistique",
+            name: "Profile",
             icon: Icons.dashboard,
             isSelected: selectedItemIndex == 1,
           ),

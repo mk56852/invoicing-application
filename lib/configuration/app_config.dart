@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:management_app/presentation/screens/home_screen.dart';
+import 'package:management_app/presentation/screens/profil_screen.dart';
 import 'package:management_app/presentation/screens/users_screen.dart';
 import 'package:management_app/presentation/widgets/sidebar_item.dart';
 import 'package:management_app/utils/app_methods.dart';
+
+class SimpleAppColors {
+  static final Color blueColor = Color.fromRGBO(3, 24, 56, 1);
+}
 
 class AppConfig {
   final AppColors lightColors;
@@ -81,11 +85,11 @@ class SideBarItemDesc {
   Widget getScreen() {
     switch (name) {
       case "Home":
-        return const HomeScreen();
+        return const ProfilScreen();
       case "Users":
         return const UserScreen();
       default:
-        return const HomeScreen();
+        return const UserScreen();
     }
   }
 
