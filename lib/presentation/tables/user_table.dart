@@ -7,6 +7,7 @@ import 'package:management_app/presentation/providers/user_data_provider.dart';
 import 'package:management_app/presentation/widgets/add_user_modal.dart';
 import 'package:management_app/presentation/widgets/app_button.dart';
 import 'package:management_app/presentation/widgets/item_selection_counter.dart';
+import 'package:management_app/utils/loading_dialog.dart';
 import 'package:management_app/utils/pdf_builder.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:panara_dialogs/panara_dialogs.dart';
@@ -27,6 +28,7 @@ class _UserTableState extends ConsumerState<UserTable> {
   final TextEditingController _searchController = TextEditingController();
   final Debouncer _debouncer = Debouncer();
   List<User> _filteredUsers = [];
+  bool isGeneratingPdf = false;
 
   @override
   void initState() {
@@ -89,110 +91,141 @@ class _UserTableState extends ConsumerState<UserTable> {
       ),
     );
 
-    return Column(
+    return Stack(
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.max,
+        Column(
           children: [
-            Expanded(
-              child: SizedBox(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Rechercher un propriétaire',
-                    hintText: 'taper le nom, ref, ...',
-                    prefixIcon: Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Rechercher un propriétaire',
+                        hintText: 'taper le nom, ref, ...',
+                        prefixIcon: Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
                 ),
+                SizedBox(
+                  width: 100,
+                ),
+                AppOutlinedButton(
+                  text: "Ajouter propriétaire",
+                  icon: Icons.person_add,
+                  onClick: () => showMaterialModalBottomSheet(
+                      backgroundColor: Colors.transparent,
+                      context: context,
+                      builder: (context) => AddUserModal(ref: ref)),
+                  height: 50,
+                  borderColor: SimpleAppColors.blueColor,
+                  fontColor: SimpleAppColors.blueColor,
+                  width: 200,
+                ),
+                SizedBox(
+                  width: 5,
+                ),
+                AppOutlinedButton(
+                  borderColor: SimpleAppColors.blueColor,
+                  fontColor: SimpleAppColors.blueColor,
+                  text: "Exporter pdf",
+                  icon: Icons.download,
+                  onClick: () async {
+                    setState(() {
+                      isGeneratingPdf = true;
+                    });
+                    bool flag = await builder.build(users, selectedIds);
+                    await Future.delayed(Duration(milliseconds: 2500));
+                    setState(() {
+                      isGeneratingPdf = false;
+                    });
+                    if (flag) {
+                      await PanaraInfoDialog.show(context,
+                          color: SimpleAppColors.blueColor,
+                          panaraDialogType: PanaraDialogType.error,
+                          buttonText: "Retourner",
+                          message: "Facture est generé avec succée",
+                          onTapDismiss: () => Navigator.pop(context));
+                    } else {
+                      await PanaraInfoDialog.show(context,
+                          color: SimpleAppColors.blueColor,
+                          panaraDialogType: PanaraDialogType.error,
+                          buttonText: "Retourner",
+                          message:
+                              "Erreur, nous ne pouvons pas generer la facture",
+                          onTapDismiss: () => Navigator.pop(context));
+                    }
+                  },
+                  height: 50,
+                  width: 180,
+                )
+              ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Expanded(
+              child: _filteredUsers.isEmpty
+                  ? Center(child: Text('No users found'))
+                  : SfDataGrid(
+                      key: key,
+                      allowEditing: true,
+                      navigationMode: GridNavigationMode.cell,
+                      selectionMode: SelectionMode.single,
+                      columnWidthMode: ColumnWidthMode.fill,
+                      source: dataSource,
+                      columns: [
+                        GridColumn(
+                          columnName: "select",
+                          width: 60,
+                          label: Container(
+                              color: SimpleAppColors.blueColor,
+                              alignment: Alignment.center,
+                              child: ItemSelectionCounter()),
+                        ),
+                        generateColumn("id", "ID", false),
+                        generateColumn("name", "Nom du Propriétaire"),
+                        generateColumn("ref", "Ref.CFE"),
+                        generateColumn("title", "Titre Foncier"),
+                        generateColumn("price", "Montant HT"),
+                        generateColumn("action", "Action")
+                      ],
+                    ),
+            ),
+            SfDataPagerTheme(
+              data: SfDataPagerThemeData(
+                itemColor: Colors.white,
+                selectedItemColor: SimpleAppColors.blueColor,
+                itemBorderRadius: BorderRadius.circular(5),
+                itemBorderWidth: 0.5,
+                itemBorderColor: Colors.grey.shade400,
+              ),
+              child: SfDataPager(
+                delegate: dataSource,
+                pageCount: _filteredUsers.length > 0
+                    ? (_filteredUsers.length / 7).ceilToDouble()
+                    : 1,
+                direction: Axis.horizontal,
               ),
             ),
-            SizedBox(
-              width: 100,
-            ),
-            AppOutlinedButton(
-              text: "Ajouter propriétaire",
-              icon: Icons.person_add,
-              onClick: () => showMaterialModalBottomSheet(
-                  backgroundColor: Colors.transparent,
-                  context: context,
-                  builder: (context) => AddUserModal(ref: ref)),
-              height: 50,
-              borderColor: SimpleAppColors.blueColor,
-              fontColor: SimpleAppColors.blueColor,
-              width: 200,
-            ),
-            SizedBox(
-              width: 5,
-            ),
-            AppOutlinedButton(
-              borderColor: SimpleAppColors.blueColor,
-              fontColor: SimpleAppColors.blueColor,
-              text: "Exporter pdf",
-              icon: Icons.download,
-              onClick: () async {
-                await builder.build(users, selectedIds);
-              },
-              height: 50,
-              width: 180,
-            )
           ],
         ),
-        SizedBox(
-          height: 10,
-        ),
-        Expanded(
-          child: _filteredUsers.isEmpty
-              ? Center(child: Text('No users found'))
-              : SfDataGrid(
-                  key: key,
-                  allowEditing: true,
-                  navigationMode: GridNavigationMode.cell,
-                  selectionMode: SelectionMode.single,
-                  columnWidthMode: ColumnWidthMode.fill,
-                  source: dataSource,
-                  columns: [
-                    GridColumn(
-                      columnName: "select",
-                      width: 60,
-                      label: Container(
-                          color: SimpleAppColors.blueColor,
-                          alignment: Alignment.center,
-                          child: ItemSelectionCounter()),
-                    ),
-                    generateColumn("id", "ID", false),
-                    generateColumn("name", "Nom du Propriétaire"),
-                    generateColumn("ref", "Ref.CFE"),
-                    generateColumn("title", "Titre Foncier"),
-                    generateColumn("price", "Montant HT"),
-                    generateColumn("action", "Action")
-                  ],
-                ),
-        ),
-        SfDataPagerTheme(
-          data: SfDataPagerThemeData(
-            itemColor: Colors.white,
-            selectedItemColor: SimpleAppColors.blueColor,
-            itemBorderRadius: BorderRadius.circular(5),
-            itemBorderWidth: 0.5,
-            itemBorderColor: Colors.grey.shade400,
-          ),
-          child: SfDataPager(
-            delegate: dataSource,
-            pageCount: _filteredUsers.length > 0
-                ? (_filteredUsers.length / 7).ceilToDouble()
-                : 1,
-            direction: Axis.horizontal,
-          ),
-        ),
+        if (isGeneratingPdf)
+          PdfLoadingDialog(
+            animationPath: "assets/loading.json",
+          )
       ],
     );
   }

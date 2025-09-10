@@ -10,7 +10,10 @@ class PdfBuilder {
   final GlobalKey<SfDataGridState> gridKey;
   const PdfBuilder({required this.gridKey});
 
-  Future<void> build(List<User> users, Set<int> ids) async {
+  Future<bool> build(List<User> users, Set<int> ids) async {
+    if (ids.isEmpty) {
+      return false;
+    }
     List<User> selectedUsers =
         users.where((user) => ids.contains(user.id)).toList();
     PdfDocument document = PdfDocument();
@@ -24,11 +27,11 @@ class PdfBuilder {
           details.pdfCell.style.cellPadding =
               PdfPaddings(top: 5, bottom: 2, left: 5);
           if (details.cellType == DataGridExportCellType.columnHeader) {
-            details.pdfCell.style.backgroundBrush = PdfBrushes.black;
-            details.pdfCell.style.textBrush = PdfBrushes.white;
+            details.pdfCell.style.backgroundBrush = PdfBrushes.silver;
+            details.pdfCell.style.textBrush = PdfBrushes.black;
           }
           if (details.cellType == DataGridExportCellType.row) {
-            details.pdfCell.style.backgroundBrush = PdfBrushes.lightCyan;
+            details.pdfCell.style.backgroundBrush = PdfBrushes.white;
           }
 
           if (details.cellType == DataGridExportCellType.columnHeader) {
@@ -60,6 +63,7 @@ class PdfBuilder {
     File('DataGrid.pdf').writeAsBytes(bytes);
     double nextY = layoutResult!.bounds.bottom + 70;
     await updatePdf(nextY, totalPrice(selectedUsers), 19);
+    return true;
   }
 
   Future<void> updatePdf(double nextY, double total, int tva) async {
@@ -85,13 +89,13 @@ class PdfBuilder {
         bounds: const Rect.fromLTWH(50, 250, 0, 0),
       );
       page.graphics.drawRectangle(
-          bounds: Rect.fromLTWH(50, 50, 220, 38), brush: PdfBrushes.black);
+          bounds: Rect.fromLTWH(50, 50, 220, 38), brush: PdfBrushes.silver);
       page.graphics.drawRectangle(
           bounds: Rect.fromLTWH(50, 90, 220, 80), brush: PdfBrushes.whiteSmoke);
       page.graphics.drawString(
         '     Maitre Nesrine Karray',
-        PdfCjkStandardFont(PdfCjkFontFamily.heiseiMinchoW3, 14),
-        brush: PdfBrushes.white,
+        PdfStandardFont(PdfFontFamily.helvetica, 15),
+        brush: PdfBrushes.black,
         bounds: const Rect.fromLTWH(55, 60, 280, 50),
       );
       page.graphics.drawString(
@@ -101,12 +105,12 @@ class PdfBuilder {
         bounds: const Rect.fromLTWH(80, 100, 220, 80),
       );
       page.graphics.drawRectangle(
-          bounds: Rect.fromLTWH(400, 120, 150, 38), brush: PdfBrushes.black);
+          bounds: Rect.fromLTWH(400, 120, 150, 38), brush: PdfBrushes.silver);
 
       page.graphics.drawString(
         'Facture',
         PdfStandardFont(PdfFontFamily.helvetica, 20),
-        brush: PdfBrushes.white,
+        brush: PdfBrushes.black,
         bounds: const Rect.fromLTWH(440, 128, 150, 38),
       );
 

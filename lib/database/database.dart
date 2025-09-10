@@ -7,7 +7,7 @@ import 'package:management_app/database/tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [UserEntity])
+@DriftDatabase(tables: [UserEntity, SettingEntity])
 class AppDatabase extends _$AppDatabase {
   static AppDatabase db = AppDatabase._internal();
   AppDatabase._internal([QueryExecutor? executor])
