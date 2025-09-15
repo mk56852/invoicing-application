@@ -3,6 +3,7 @@ import 'package:flutter_debouncer/flutter_debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:management_app/configuration/app_config.dart';
 import 'package:management_app/models/user.dart';
+import 'package:management_app/presentation/providers/setting_data_provider.dart';
 import 'package:management_app/presentation/providers/user_data_provider.dart';
 import 'package:management_app/presentation/widgets/add_user_modal.dart';
 import 'package:management_app/presentation/widgets/app_button.dart';
@@ -57,6 +58,7 @@ class _UserTableState extends ConsumerState<UserTable> {
   Widget build(BuildContext context) {
     List<User> users = ref.watch(userNotifierProvider);
     final selectedIds = ref.watch(selectedIdsProvider);
+    final setting = ref.watch(settingNotifierProvider);
 
     if (_searchController.text.isEmpty) {
       _filteredUsers = users;
@@ -146,7 +148,10 @@ class _UserTableState extends ConsumerState<UserTable> {
                     setState(() {
                       isGeneratingPdf = true;
                     });
-                    bool flag = await builder.build(users, selectedIds);
+
+                    bool flag =
+                        await builder.build(users, selectedIds, setting);
+
                     await Future.delayed(Duration(milliseconds: 2500));
                     setState(() {
                       isGeneratingPdf = false;
@@ -158,6 +163,9 @@ class _UserTableState extends ConsumerState<UserTable> {
                           buttonText: "Retourner",
                           message: "Facture est generé avec succée",
                           onTapDismiss: () => Navigator.pop(context));
+                      await ref
+                          .read(settingNotifierProvider.notifier)
+                          .exportFacture();
                     } else {
                       await PanaraInfoDialog.show(context,
                           color: SimpleAppColors.blueColor,
@@ -193,7 +201,8 @@ class _UserTableState extends ConsumerState<UserTable> {
                           label: Container(
                               color: SimpleAppColors.blueColor,
                               alignment: Alignment.center,
-                              child: ItemSelectionCounter()),
+                              child: ItemSelectionCounter(
+                                  all: users.map((user) => user.id).toSet())),
                         ),
                         generateColumn("id", "ID", false),
                         generateColumn("name", "Nom du Propriétaire"),

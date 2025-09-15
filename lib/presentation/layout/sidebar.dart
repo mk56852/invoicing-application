@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:management_app/configuration/app_config.dart';
+import 'package:management_app/presentation/providers/setting_data_provider.dart';
 import 'package:management_app/presentation/screens/profil_screen.dart';
 import 'package:management_app/presentation/screens/users_screen.dart';
 import 'package:management_app/presentation/widgets/sidebar_item.dart';
 
-class SideBar extends StatefulWidget {
+class SideBar extends ConsumerStatefulWidget {
   final Function updateScreen;
   const SideBar({super.key, required this.updateScreen});
 
   @override
-  State<SideBar> createState() => _SideBarState();
+  ConsumerState<SideBar> createState() => _SideBarState();
 }
 
-class _SideBarState extends State<SideBar> {
+class _SideBarState extends ConsumerState<SideBar> {
   int selectedItemIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    String name = ref.watch(settingNotifierProvider).getFullName();
     return Container(
       constraints: const BoxConstraints(
         maxWidth: 300,
@@ -36,7 +39,7 @@ class _SideBarState extends State<SideBar> {
               fontSize: 26, color: Colors.white, fontWeight: FontWeight.bold),
         ),
         Text(
-          "Nessrine Karray",
+          name,
           style: GoogleFonts.dancingScript(
               fontSize: 26, color: Colors.white, fontWeight: FontWeight.bold),
         ),

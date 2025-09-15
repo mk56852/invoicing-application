@@ -1,0 +1,15 @@
+{
+
+  "name": "Lmalik ",
+  "lastName": "Ketata",
+  "email": "john.doe@email.com",
+    "adress":"hello adreess",
+  "phone1": "123456789",
+   "fax": "55674239",
+  "phone2": "987654321",
+  "tva": 12345,
+  "factureNumber":1,
+  "dbDirectory": "/dataBaseDirectory",
+  "matricule":"1009384D/P/000",
+  "factureDirectory": "/invoices"
+}
