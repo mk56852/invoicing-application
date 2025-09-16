@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_debouncer/flutter_debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:management_app/configuration/app_config.dart';
+import 'package:management_app/models/setting.dart';
 import 'package:management_app/models/user.dart';
 import 'package:management_app/presentation/providers/setting_data_provider.dart';
 import 'package:management_app/presentation/providers/user_data_provider.dart';
 import 'package:management_app/presentation/widgets/add_user_modal.dart';
 import 'package:management_app/presentation/widgets/app_button.dart';
+import 'package:management_app/presentation/widgets/custom_export_modal.dart';
 import 'package:management_app/presentation/widgets/item_selection_counter.dart';
 import 'package:management_app/utils/loading_dialog.dart';
 import 'package:management_app/utils/pdf_builder.dart';
@@ -125,12 +127,33 @@ class _UserTableState extends ConsumerState<UserTable> {
                   width: 100,
                 ),
                 AppOutlinedButton(
-                  text: "Ajouter propriétaire",
+                  text: "Ajouter",
                   icon: Icons.person_add,
                   onClick: () => showMaterialModalBottomSheet(
                       backgroundColor: Colors.transparent,
                       context: context,
                       builder: (context) => AddUserModal(ref: ref)),
+                  height: 50,
+                  borderColor: SimpleAppColors.blueColor,
+                  fontColor: SimpleAppColors.blueColor,
+                  width: 180,
+                ),
+                SizedBox(
+                  width: 5,
+                ),
+                AppOutlinedButton(
+                  text: "Exporter sur mesure",
+                  icon: Icons.downloading_rounded,
+                  onClick: () async {
+                    List<Object?> items = await showMaterialModalBottomSheet(
+                        backgroundColor: Colors.transparent,
+                        context: context,
+                        builder: (context) => CustomExportModal(ref: ref));
+                    if (!items.isEmpty) {
+                      export(users, selectedIds, items[0] as Setting,
+                          items[1] as DateTime);
+                    }
+                  },
                   height: 50,
                   borderColor: SimpleAppColors.blueColor,
                   fontColor: SimpleAppColors.blueColor,
@@ -144,38 +167,8 @@ class _UserTableState extends ConsumerState<UserTable> {
                   fontColor: SimpleAppColors.blueColor,
                   text: "Exporter pdf",
                   icon: Icons.download,
-                  onClick: () async {
-                    setState(() {
-                      isGeneratingPdf = true;
-                    });
-
-                    bool flag =
-                        await builder.build(users, selectedIds, setting);
-
-                    await Future.delayed(Duration(milliseconds: 2500));
-                    setState(() {
-                      isGeneratingPdf = false;
-                    });
-                    if (flag) {
-                      await PanaraInfoDialog.show(context,
-                          color: SimpleAppColors.blueColor,
-                          panaraDialogType: PanaraDialogType.error,
-                          buttonText: "Retourner",
-                          message: "Facture est generé avec succée",
-                          onTapDismiss: () => Navigator.pop(context));
-                      await ref
-                          .read(settingNotifierProvider.notifier)
-                          .exportFacture();
-                    } else {
-                      await PanaraInfoDialog.show(context,
-                          color: SimpleAppColors.blueColor,
-                          panaraDialogType: PanaraDialogType.error,
-                          buttonText: "Retourner",
-                          message:
-                              "Erreur, nous ne pouvons pas generer la facture",
-                          onTapDismiss: () => Navigator.pop(context));
-                    }
-                  },
+                  onClick: () async =>
+                      await export(users, selectedIds, setting),
                   height: 50,
                   width: 180,
                 )
@@ -237,6 +230,36 @@ class _UserTableState extends ConsumerState<UserTable> {
           )
       ],
     );
+  }
+
+  Future<void> export(List<User> users, Set<int> selectedIds, Setting setting,
+      [DateTime? date]) async {
+    setState(() {
+      isGeneratingPdf = true;
+    });
+
+    bool flag = await builder.build(users, selectedIds, setting, date);
+
+    await Future.delayed(Duration(milliseconds: 2500));
+    setState(() {
+      isGeneratingPdf = false;
+    });
+    if (flag) {
+      await PanaraInfoDialog.show(context,
+          color: SimpleAppColors.blueColor,
+          panaraDialogType: PanaraDialogType.error,
+          buttonText: "Retourner",
+          message: "Facture est generé avec succée",
+          onTapDismiss: () => Navigator.pop(context));
+      await ref.read(settingNotifierProvider.notifier).exportFacture();
+    } else {
+      await PanaraInfoDialog.show(context,
+          color: SimpleAppColors.blueColor,
+          panaraDialogType: PanaraDialogType.error,
+          buttonText: "Retourner",
+          message: "Erreur, nous ne pouvons pas generer la facture",
+          onTapDismiss: () => Navigator.pop(context));
+    }
   }
 
   List<DataGridRow> generateGridRows(List<User> users) {

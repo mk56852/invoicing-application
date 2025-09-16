@@ -6,6 +6,7 @@ import 'package:management_app/presentation/providers/setting_data_provider.dart
 import 'package:management_app/presentation/screens/profil_screen.dart';
 import 'package:management_app/presentation/screens/users_screen.dart';
 import 'package:management_app/presentation/widgets/sidebar_item.dart';
+import 'package:management_app/utils/contact_info.dart';
 
 class SideBar extends ConsumerStatefulWidget {
   final Function updateScreen;
@@ -71,6 +72,11 @@ class _SideBarState extends ConsumerState<SideBar> {
             icon: Icons.dashboard,
             isSelected: selectedItemIndex == 1,
           ),
+        ),
+        Spacer(),
+        SizedBox(
+          height: 120,
+          child: ContactInfo(),
         )
       ]),
     );

@@ -12,7 +12,8 @@ class PdfBuilder {
   final GlobalKey<SfDataGridState> gridKey;
   const PdfBuilder({required this.gridKey});
 
-  Future<bool> build(List<User> users, Set<int> ids, Setting setting) async {
+  Future<bool> build(List<User> users, Set<int> ids, Setting setting,
+      [DateTime? date]) async {
     try {
       if (ids.isEmpty) {
         return false;
@@ -67,16 +68,17 @@ class PdfBuilder {
               '${setting.factureDirectory}/Facture_${setting.factureNumber}.pdf')
           .writeAsBytes(bytes);
       double nextY = layoutResult!.bounds.bottom + 70;
-      await updatePdf(nextY, totalPrice(selectedUsers), setting);
+      await updatePdf(nextY, totalPrice(selectedUsers), setting, date);
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  Future<void> updatePdf(double nextY, double total, Setting setting) async {
+  Future<void> updatePdf(
+      double nextY, double total, Setting setting, DateTime? date) async {
     String totalPrice = (total * (100 - setting.tva) / 100).toStringAsFixed(3);
-
+    DateTime dateT = date ?? DateTime.now();
     // Load the existing PDF document from assets
     final File filex = File(
         '${setting.factureDirectory}/Facture_${setting.factureNumber}.pdf');
@@ -116,7 +118,7 @@ class PdfBuilder {
     );
 
     page.graphics.drawString(
-      'Adresse: ${setting.adress}',
+      '${setting.adress}',
       PdfStandardFont(PdfFontFamily.helvetica, 10),
       brush: PdfBrushes.black,
       bounds: const Rect.fromLTWH(56, 113, 220, 80),
@@ -158,7 +160,7 @@ class PdfBuilder {
       bounds: Rect.fromLTWH(420, 196, 150, 30),
     );
     page.graphics.drawString(
-      "Date : ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
+      "Date : ${dateT.day}/${dateT.month}/${dateT.year}",
       PdfStandardFont(PdfFontFamily.helvetica, 10),
       brush: PdfBrushes.black,
       bounds: Rect.fromLTWH(420, 210, 150, 30),
@@ -226,7 +228,7 @@ class PdfBuilder {
     );
 
     page.graphics.drawRectangle(
-        bounds: Rect.fromLTWH(30, nextY + 140, 270, 25),
+        bounds: Rect.fromLTWH(30, nextY + 140, 220, 25),
         brush: PdfBrushes.black);
     page.graphics.drawString(
       'Arrété la présete facture a la somme de :',
@@ -235,13 +237,13 @@ class PdfBuilder {
       bounds: Rect.fromLTWH(40, nextY + 144, 300, 30),
     );
     page.graphics.drawRectangle(
-        bounds: Rect.fromLTWH(300, nextY + 140, 270, 25),
+        bounds: Rect.fromLTWH(250, nextY + 140, 320, 25),
         brush: PdfBrushes.whiteSmoke);
     page.graphics.drawString(
       currencyToWords(double.parse(totalPrice)),
       PdfStandardFont(PdfFontFamily.helvetica, 11),
       brush: PdfBrushes.black,
-      bounds: Rect.fromLTWH(310, nextY + 144, 300, 30),
+      bounds: Rect.fromLTWH(260, nextY + 144, 350, 30),
     );
     // Save the updated document
     final List<int> updatedBytes = await document.save();
